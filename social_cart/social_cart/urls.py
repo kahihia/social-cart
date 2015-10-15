@@ -16,7 +16,20 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 
+from social_cart import views
+
+admin.autodiscover()
+
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^login/', views.login)
+    url(r'^login/$', views.login),
+    url(r'^search/', views.UserSearchView.as_view()),
+    url(r'^friends/(?P<shopper_id>\w+)/$', views.FriendsView.as_view()),
+    url(r'^friends/$', views.FriendsView.as_view()),
 ]
+
+from rest_framework import routers
+
+router = routers.SimpleRouter()
+router.register(r'^groups', views.GroupViewSet, base_name='Groups')
+urlpatterns += router.urls

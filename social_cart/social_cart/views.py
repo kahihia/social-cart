@@ -13,14 +13,15 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.decorators import detail_route
 
-from .serializers import SocialShopperSerializer, FriendSerializer, GroupListSerializer, GroupMemberSerializer, GroupSerializer
-from .models import SocialShopper, SocialCart, SocialCartItem, PersonalCart, PersonalCartItem, SocialFriends, SocialGroup, SocialGroupMember
+from .serializers import ShopperSerializer, FriendSerializer, GroupListSerializer, GroupMemberSerializer, GroupSerializer
+from .models import Shopper, Cart, CartItem, Friend, Group, GroupMember
 
 logger = logging.getLogger(__name__)
+
 
 def login(request):
     if request.method == 'GET':
@@ -50,35 +51,42 @@ def login(request):
 
 
 class BaseApiView(APIView):
-    authentication_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, )
+
 
 class UserSearchView(BaseApiView):
     def get(self, request, format=None):
         try:
-            param = self.kwargs['q']
-        except IndexError as e:
+            param = self.request.GET['q']
+        except KeyError as e:
             raise Http404
-
-        shoppers = SocialShopper.objects.filter(Q(user__first_name__icontains=param) |
+        shoppers = Shopper.objects.filter(Q(user__first_name__icontains=param) |
                                                 Q(user__last_name__icontains=param) |
                                                 Q(user__email__icontains=param) |
                                                 Q(user__username__icontains=param))
-        serializer = SocialShopperSerializer(shoppers, many=True)
+        serializer = ShopperSerializer(shoppers, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
-class AddFriendView(BaseApiView):
-    def get_object(self, shopper_id):
+
+class FriendsView(BaseApiView):
+    def get_object(self, user):
         try:
-            SocialShopper.objects.get(user=shopper_id)
-        except SocialShopper.DoesNotExist as e:
+            return Shopper.objects.get(user=user)
+        except Shopper.DoesNotExist as e:
             logger.exception('User Not Found')
             raise Http404
+
+    def get(self, request, format=None):
+        user = self.get_object(request.user)
+        friends = user.get_friends()
+        serializer = ShopperSerializer(friends, many=True)
+        return Response(serializer.data, HTTP_200_OK)
 
     def put(self, request, shopper_id, format=None):
         user = self.get_object(request.user)
         friend = self.get_object(shopper_id)
-        friends = user.add_friend(friend)
-        serializer = FriendSerializer(friends)
+        friendship = user.add_friend(friend)
+        serializer = FriendSerializer(friendship)
         return Response(serializer.data, status=HTTP_201_CREATED)
 
     def delete(self, request, shopper_id, format=None):
@@ -87,31 +95,32 @@ class AddFriendView(BaseApiView):
         user.remove_friends(friend)
         return Response({'status': 'SUCCESS', 'detail': 'Removed friend'}, status=HTTP_204_NO_CONTENT)
 
-class GroupViewSet(BaseApiView, ViewSet):
+
+class GroupViewSet(BaseApiView, ModelViewSet):
     def get_shopper(self, shopper_id):
         try:
-            SocialShopper.objects.get(user=shopper_id)
-        except SocialShopper.DoesNotExist as e:
+            return Shopper.objects.get(user=shopper_id)
+        except Shopper.DoesNotExist as e:
             logger.exception('User Not Found')
             raise Http404
 
     def get_object(self, user, group_id):
         try:
-            SocialGroup.objects.get(user=user, pk=group_id)
-        except SocialShopper.DoesNotExist as e:
+            return Group.objects.get(user=user, pk=group_id)
+        except Shopper.DoesNotExist as e:
             logger.exception('Group Not Found')
             raise Http404
 
     def retrieve(self, request, format=None):
         user = self.get_shopper(request.user)
-        groups = SocialGroup.objects.filter(user=user)
+        groups = Group.objects.filter(user=user)
         serializer = GroupListSerializer(groups)
         return Response(serializer.data, status=HTTP_200_OK)
 
-    @detail_route(methods=['put'])
-    def create_list(self, request, group_name):
+    def create(self, request, format=None):
+        group_name = self.request.POST['group_name']
         user = self.get_shopper(request.user)
-        group = SocialGroup.objects.create(name=group_name, user=user)
+        group = Group.objects.create(name=group_name, user=user)
         serializer = GroupSerializer(group)
         return Response(serializer.data, HTTP_201_CREATED)
 
@@ -120,10 +129,10 @@ class GroupViewSet(BaseApiView, ViewSet):
         user = self.get_shopper(request.user)
         group = self.get_object(user, group_id)
         try:
-            friend = self.get_shopper(self.kwargs['friend'])
+            friend = self.get_shopper(self.request.GET['friend'])
             if not user.is_friend(friend):
                 raise ValueError
-            member = SocialGroupMember.objects.create(group, friend)
+            member = GroupMember.objects.create(group, friend)
             serializer = GroupMemberSerializer(member)
             return Response(serializer.data, HTTP_201_CREATED)
         except KeyError as e:
@@ -138,10 +147,10 @@ class GroupViewSet(BaseApiView, ViewSet):
         user = self.get_shopper(request.user)
         group = self.get_object(user, group_id)
         try:
-            friend = self.get_shopper(self.kwargs['friend'])
+            friend = self.get_shopper(self.request.GET['friend'])
             if not user.is_friend(friend):
                 raise ValueError
-            SocialGroupMember.objects.filter(group, friend).delete()
+            GroupMember.objects.filter(group, friend).delete()
             return Response({'status': 'SUCCESS', 'detail': 'Successfully removed from List'}, HTTP_204_NO_CONTENT)
         except KeyError as e:
             logger.info('Friend parameter missing')
