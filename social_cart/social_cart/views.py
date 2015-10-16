@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.http.response import JsonResponse
 from django.shortcuts import Http404, HttpResponse, HttpResponseRedirect
+from django.views.generic import View, TemplateView
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
@@ -17,41 +18,133 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.decorators import detail_route
 
-from .serializers import ShopperSerializer, FriendSerializer, GroupListSerializer, GroupMemberSerializer, GroupSerializer
-from .models import Shopper, Cart, CartItem, Friend, Group, GroupMember
+from .serializers import (ShopperSerializer, FriendSerializer, GroupListSerializer, GroupMemberSerializer,
+                          GroupSerializer, ProductSerializer, CartInviteSerializer, CartItemSerializer)
+from .models import Shopper, Cart, CartItem, CartInvite, Friend, Group, GroupMember, Product
 
 logger = logging.getLogger(__name__)
 
 
-def login(request):
-    if request.method == 'GET':
-        raise Http404
-
-    try:
-        email = request.POST.get('email')
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        user = authenticate(username=username, password=password)
-        status = 'SUCCESS'
-        if user is None:
-            if User.objects.filter(Q(username=username) | Q(email=email)).count():
-                status = 'FAIL'
-                response = 'Username or email already exists. Please try again!'
-            else:
-                user = User.objects.create_user(username, email, password)
-                response = 'Successfully signed up with Social Cart!'
-        else:
-            response = 'Successfully logged in to Social Cart!'
-
-        return JsonResponse({'status': status, 'detail': response})
-
-    except KeyError:
-        raise Http404
-
-
 class BaseApiView(APIView):
     permission_classes = (IsAuthenticated, )
+
+
+class LoginRequiredMixin(object):
+    @classmethod
+    def as_view(cls, **initkwargs):
+        view = super(LoginRequiredMixin, cls).as_view(**initkwargs)
+        return login_required(view, login_url='/login/')
+
+
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = 'home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(HomeView, self).get_context_data(**kwargs)
+        return context
+
+
+class SocialCartTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = 'social_cart.html'
+
+    def get_context_data(self, request, **kwargs):
+        try:
+            shopper = Shopper.objects.get(user=request.user)
+        except Shopper.DoesNotExist as e:
+            logger.exception('User Not Found')
+            raise Http404
+
+        context = super(SocialCartTemplateView, self).get_context_data(**kwargs)
+        try:
+            cart = Cart.objects.filter(user=shopper, type='S', is_active=True)[0]
+            context.update({'cart': cart.pk})
+        except IndexError as e:
+            logger.info('No Active cart found')
+        return context
+
+
+class SocialCartInviteeView(BaseApiView):
+    def get_object(self, user):
+        try:
+            return Shopper.objects.get(user=user)
+        except Shopper.DoesNotExist as e:
+            logger.exception('User Not Found')
+            raise Http404
+
+    def get(self, request, format=None):
+        shopper = self.get_object(request.user)
+        social_carts = CartInvite.objects.filter(invitee=shopper, is_active=True)
+        serializer = CartInviteSerializer(social_carts, many=True)
+        return Response(serializer.data, HTTP_200_OK)
+
+    def post(self, request, format=None):
+        serializer = CartItemSerializer(request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=HTTP_201_CREATED)
+
+        return Response(status=HTTP_400_BAD_REQUEST)
+
+
+class SocialCartShopperView(BaseApiView):
+    def get_object(self, user):
+        try:
+            return Shopper.objects.get(user=user)
+        except Shopper.DoesNotExist as e:
+            logger.exception('User Not Found')
+            raise Http404
+
+    def get_cart(self, request, shopper):
+        try:
+            if 'cart' in request.GET:
+                return Cart.objects.get(pk=request.GET['cart'])
+            else:
+                return Cart.objects.filter(invitee=shopper, is_active=True).order_by('-created_at')[0]
+        except (IndexError, Cart.DoesNotExist,) as e:
+            raise Http404
+
+    def get(self, request, format=None):
+        shopper = self.get_object(request.user)
+        social_cart = self.get_cart(request, shopper)
+
+        cart_items = social_cart.cartitems.all()
+        products = [cart_item.product for cart_item in cart_items]
+        serializer = ProductSerializer(products, many=True)
+
+        return Response(serializer.data, HTTP_200_OK)
+
+    def post(self, request, format=None):
+        shopper = self.get_object(request.user)
+        social_cart = self.get_cart(request, shopper)
+        social_cart.finalize()
+        return Response(status=HTTP_201_CREATED)
+
+
+class SocialCartHomeView(BaseApiView):
+    def get_object(self, user):
+        try:
+            return Shopper.objects.get(user=user)
+        except Shopper.DoesNotExist as e:
+            logger.exception('User Not Found')
+            raise Http404
+
+    def get(self, request, format=None):
+        shopper = self.get_object(request.user)
+        social_cart = Cart.objects.filter(user=shopper, is_active=True)
+        pass
+
+
+class LoginView(TemplateView):
+    template_name = 'login.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(LoginView, self).get_context_data(**kwargs)
+        return context
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated():
+            return HttpResponseRedirect('/home/')
+        return super(LoginView, self).get(request, *args, **kwargs)
 
 
 class UserSearchView(BaseApiView):
@@ -95,6 +188,54 @@ class FriendsView(BaseApiView):
         user.remove_friends(friend)
         return Response({'status': 'SUCCESS', 'detail': 'Removed friend'}, status=HTTP_204_NO_CONTENT)
 
+
+class ProductsView(BaseApiView):
+    def get(self, request, format=None):
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response({'products': serializer.data}, HTTP_200_OK)
+
+
+class GoShopView(BaseApiView):
+    """
+    Allows the Shopper to Initiate a Social Shopping Event
+    """
+    def get_object(self, user):
+        try:
+            return Shopper.objects.get(user=user)
+        except Shopper.DoesNotExist as e:
+            logger.exception('User Not Found')
+            raise Http404
+
+    def get(self, request, format=None):
+        shopper = self.get_object(request.user)
+        groups = Group.objects.filter(user=shopper)
+        group_serializer = GroupSerializer(groups, many=True)
+        friends = shopper.get_friends()
+        friend_serializer = FriendSerializer(friends, many=True)
+        return Response({'friends': friend_serializer.data, 'groups': group_serializer.data}, HTTP_200_OK)
+
+    def post(self, request, format=None):
+        shopper = self.get_object(request.user)
+        Cart.objects.create(user=shopper, type='S', is_active=True)
+
+        friends = groups = []
+        if 'friends' in request.POST:
+            friends = request.POST['friends']
+        if 'groups' in request.POST:
+            groups = request.POST['groups']
+
+        notify_set = set(friends)
+
+        for group in groups:
+            for friend in group.get_members:
+                notify_set.add(friend['pk'])
+
+        for friend in notify_set:
+            CartInvite.objects.create(owner=shopper)
+            friend.notify_cart_created()
+
+        return HttpResponseRedirect('/social-cart/')
 
 class GroupViewSet(BaseApiView, ModelViewSet):
     def get_shopper(self, shopper_id):

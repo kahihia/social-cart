@@ -33,8 +33,11 @@ class CartAdmin(admin.ModelAdmin):
 class ShopperAdmin(admin.ModelAdmin):
     model = Shopper
 
+class ProductAdmin(admin.ModelAdmin):
+    model = Product
 
 admin.site.register(Cart, CartAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Friend, FriendAdmin)
 admin.site.register(Shopper, ShopperAdmin)
+admin.site.register(Product, ProductAdmin)

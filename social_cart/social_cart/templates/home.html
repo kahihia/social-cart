@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="home">
+    <div class="row jumbotron">
+        <div class="shop-now">
+            <h3>At the Store or Ordering Online!</h3>
+            <h4>Why not pick something up for your friends?</h4>
+            <a href="/social-cart/">
+                <button class="btn btn-shop">Go Social Shopping!</button>
+            </a>
+        </div>
+    </div>
+    <div id="products" class="products">
+        <div id="products-div" class="row">
+            <!-- dynamic content goes here -->
+        </div>
+        <div class="row">
+            <div class="col-xs-6">
+                <button id="add_cart" class="btn btn-info">Add to Cart!</button>
+            </div>
+            <div class="col-xs-6">
+                <button id="add_social_cart" class="btn btn-success">Add Social Cart!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% verbatim card %}
+<script type="text/x-handlebars-template" id="template-product-cards">
+    {{#each products}}
+    <div class="col-xs-6 col-md-4">
+        <div class="product">
+            <a href="#" class="thumbnail product-thumbs">
+                <button class="rollback pull-left btn btn-danger">Rollback</button>
+                <img src="{{ this.image_url }}" class="img-responsive" alt="Responsive image">
+
+                <div class="overlays">
+                    <p class="price">&#36;{{ this.sale_price }}</p>
+                </div>
+                <div class="overlays-review">
+                    <div class="col-xs-6 col-md-4">
+                        <img src="{{ this.rating_url }}" class="pull-left img-responsive img-rating"
+                             alt="Rating: {{ this.rating }}">
+                    </div>
+                    <button class="pull-right btn reviews">Reviews<span
+                            class="badge">{{ this.reviews }}</span></button>
+                </div>
+                <div class="name">
+                    <p class="product-name">{{ this.name }}</p>
+                </div>
+                <div class="input-group">
+                        <span class="input-group-btn">
+                          <button type="button" class="btn btn-number" data-type="minus"
+                                  data-field="quant[2]">
+                              <span class="glyphicon glyphicon-minus"></span>
+                          </button>
+                        </span>
+                    <input type="text" name="{{ this.item_id }}" class="form-control input-number" value="0" min="0"
+                           max="100">
+                        <span class="input-group-btn">
+                          <button type="button" class="btn btn-success btn-number" data-type="plus"
+                                  data-field="quant[2]">
+                              <span class="glyphicon glyphicon-plus"></span>
+                          </button>
+                        </span>
+                </div>
+            </a>
+        </div>
+    </div>
+    {{/each}}
+</script>
+
+{% endverbatim card %}
+
+{% endblock content %}
+
+{% block page_specific_js %}
+
+$('#add_cart').click(function() {
+console.log('cart');
+});
+
+$('#add_social_cart').click(function() {
+console.log('social cart');
+});
+
+function cartItems(data) {
+console.log(data);
+var source = $("#template-product-cards").html();
+var template = Handlebars.compile(source);
+var html = template(data);
+console.log(html);
+$('#products-div').html(html);
+}
+
+$.getJSON('/products/?format=json', cartItems);
+
+{% endblock page_specific_js %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+{% endblock content %}
+
+
+{% block page_specific_js %}
+existing_ids = []
+(function poll(){
+   setTimeout(function(){
+      $.ajax({ url: '/social-cart/update/', success: function(data){
+
+
+        //Setup the next poll recursively
+        poll();
+      }, dataType: "json"});
+  }, 30000);
+})();
+
+{% endblock page_specific_js %}

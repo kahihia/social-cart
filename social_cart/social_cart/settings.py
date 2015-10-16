@@ -37,8 +37,16 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'social_cart',
     'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
+    'facepy',
+    'googleapiclient',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -56,7 +64,7 @@ ROOT_URLCONF = 'social_cart.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR + '/templates/',],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,6 +76,14 @@ TEMPLATES = [
         },
     },
 ]
+
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 WSGI_APPLICATION = 'social_cart.wsgi.application'
 
@@ -99,8 +115,47 @@ USE_L10N = True
 
 USE_TZ = True
 
+SITE_ID = 2
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+
+
+SOCIALACCOUNT_PROVIDERS = \
+    {
+        'facebook': {
+            'METHOD': 'oauth2',
+            'SCOPE': ['email', 'public_profile', 'user_friends'],
+            'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+            'FIELDS': [
+                'id',
+                'email',
+                'name',
+                'first_name',
+                'last_name',
+                'verified',
+                'locale',
+                'timezone',
+                'link',
+                'gender',
+                'updated_time'
+            ],
+            'EXCHANGE_TOKEN': True,
+            'VERIFIED_EMAIL': False,
+            'VERSION': 'v2.4'
+        },
+
+        'google': {
+            'SCOPE': ['profile', 'email'],
+            'AUTH_PARAMS': { 'access_type': 'online' }
+        },
+     }
+
+LOGIN_REDIRECT_URL = '/home/'
+
+WALMART_API_KEY = '84quzkku9b3tmyqse3wgmk3m'

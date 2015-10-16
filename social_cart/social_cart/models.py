@@ -1,10 +1,12 @@
 __author__ = 'indrajit'
 
+import logging
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 
+logger = logging.getLogger(__name__)
 
 CART_TYPES = (
     ('P', 'Personal'),
@@ -35,27 +37,63 @@ class Shopper(models.Model):
     def get_friends(self):
         return Friend.get_friends(self)
 
+    def notify_cart_finalized(self):
+        pass
+
+    def notify_cart_created(self):
+        pass
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
+    item_id = models.BigIntegerField(unique=True)
+    msrp = models.FloatField()
+    sale_price = models.FloatField()
+    upc = models.BigIntegerField()
+    shortDescription = models.CharField(max_length=500)
     url = models.URLField()
     image_url = models.URLField()
+    brand_name = models.CharField(max_length=100)
+    rating = models.FloatField()
+    rating_url = models.URLField()
+    stock = models.CharField(max_length=20)
+    reviews = models.IntegerField()
 
 
 class Cart(models.Model):
-    user = models.ForeignKey(Shopper, related_name='%(class)s')
+    user = models.ForeignKey(Shopper, related_name='carts')
     type = models.CharField(choices=CART_TYPES, max_length=2)
-    uuid = models.UUIDField()
     is_active = models.BooleanField(default=True)
+
+    def finalize(self):
+        self.is_active = False
+        self.save()
+        for invitee in self.invitees.all():
+            invitee.notify_cart_finalized()
 
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, related_name='%(class)s')
+    cart = models.ForeignKey(Cart, related_name='cartitems')
     product = models.ForeignKey(Product)
+    item_id = models.BigIntegerField()
     quantity = models.IntegerField(default=0)
     created_at = models.DateTimeField('Added At', auto_now_add=True)
     updated_at = models.DateTimeField('Updated At', auto_now_add=True)
     added_by = models.ForeignKey(Shopper)
+
+
+class CartInvite(models.Model):
+    owner = models.ForeignKey(Shopper, related_name='owner')
+    cart = models.ForeignKey(Cart)
+    invitee = models.ForeignKey(Shopper, related_name='invitees')
+    is_active = models.BooleanField()
+
+    @property
+    def get_cart_id(self):
+        return self.cart.pk
+
+    @property
+    def get_owner_name(self):
+        return self.owner.user.username
 
 class Friend(models.Model):
     friend_one = models.ForeignKey(Shopper, related_name='friendone')
@@ -118,3 +156,4 @@ def create_shopper(sender, instance, **kwargs):
         Shopper.objects.create(user=instance)
 
 post_save.connect(create_shopper, sender=User)
+
