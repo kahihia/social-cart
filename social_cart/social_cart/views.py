@@ -63,18 +63,6 @@ class SocialCartTemplateView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class CartTemplateView(LoginRequiredMixin, TemplateView):
-    template_name = 'invitees.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(CartTemplateView, self).get_context_data(**kwargs)
-        return context
-
-
-class CartUpdateView(BaseApiView):
-    pass
-
-
 class CartInviteTemplateView(LoginRequiredMixin, TemplateView):
     template_name = 'invitees.html'
 
@@ -84,6 +72,9 @@ class CartInviteTemplateView(LoginRequiredMixin, TemplateView):
 
 
 class SocialCartInviteeView(BaseApiView):
+    """
+    View used by all invitees to get social carts and add products
+    """
     def get_object(self, user):
         try:
             return Shopper.objects.get(user=user)
@@ -95,7 +86,10 @@ class SocialCartInviteeView(BaseApiView):
         shopper = self.get_object(request.user)
         social_carts = CartInvite.objects.filter(invitee=shopper, is_active=True)
         serializer = CartInviteSerializer(social_carts, many=True)
-        return Response({'carts': serializer.data}, HTTP_200_OK)
+        data = serializer.data
+        for self_cart in Cart.objects.filter(user=shopper, is_active=True):
+            data.append({'get_owner_name': 'My Cart', 'get_cart_id': self_cart.pk})
+        return Response({'carts': data}, HTTP_200_OK)
 
     def post(self, request, format=None):
         shopper = self.get_object(request.user)
@@ -105,7 +99,6 @@ class SocialCartInviteeView(BaseApiView):
         if serializer.is_valid():
             serializer.save()
             return Response({"status": "SUCCESS"}, status=HTTP_201_CREATED)
-        import pdb; pdb.set_trace()
         return Response(status=HTTP_400_BAD_REQUEST)
 
 
@@ -122,8 +115,9 @@ class SocialCartShopperView(BaseApiView):
             if 'cart' in request.GET:
                 return Cart.objects.get(pk=request.GET['cart'])
             else:
-                return Cart.objects.filter(user=shopper, is_active=True).order_by('-pk')[0]
+                    return Cart.objects.filter(user=shopper, is_active=True).order_by('-pk')[0]
         except (IndexError, Cart.DoesNotExist,) as e:
+            logger.info('No Cart Found')
             return None
 
     def get(self, request, format=None):
@@ -131,7 +125,8 @@ class SocialCartShopperView(BaseApiView):
         social_cart = self.get_cart(request, shopper)
 
         if not social_cart:
-            return Response({'redirect': '/home/'})
+            logger.exception('No Cart')
+            return Response(HTTP_204_NO_CONTENT)
 
         cart_items = social_cart.cartitems.all()
         products = [cart_item.product for cart_item in cart_items]
@@ -246,25 +241,36 @@ class GoShopView(BaseApiView):
 
     def post(self, request, format=None):
         shopper = self.get_object(request.user)
-        Cart.objects.create(user=shopper, type='S', is_active=True)
+        cart, created = Cart.objects.update_or_create(user=shopper, type='S', is_active=True,
+                                             defaults={"user": shopper, "type": "S", "is_active": True})
 
-        friends = groups = []
-        if 'friends' in request.POST:
-            friends = request.POST['friends']
-        if 'groups' in request.POST:
-            groups = request.POST['groups']
+        friend_ids = group_ids = []
+        if 'friends' in request.data:
+            friend_ids = request.data['friends']
+        if 'groups' in request.data:
+            group_ids = request.data['groups']
+        notify_set = set(friend_ids)
+        logger.info('friends: {} groups: {}'.format(friend_ids, group_ids))
+        for group_id in group_ids:
+            try:
+                group = Group.objects.get(pk=group_id)
+                logger.info("Invited Group ID: {}".format(group))
+                for friend in group.get_members:
+                    notify_set.add(friend['pk'])
+            except Group.DoesNotExist as e:
+                logger.exception("Bad Group PK: {}".format(group_id))
 
-        notify_set = set(friends)
+        for friend_id in notify_set:
+            try:
+                friend = Shopper.objects.get(pk=friend_id)
+            except Friend.DoesNotExist as e:
+                logger.exception('Friend Not Exist')
+                continue
 
-        for group in groups:
-            for friend in group.get_members:
-                notify_set.add(friend['pk'])
-
-        for friend in notify_set:
-            CartInvite.objects.create(owner=shopper)
+            CartInvite.objects.create(owner=shopper, cart=cart, invitee=friend, is_active=True)
             friend.notify_cart_created()
 
-        return HttpResponseRedirect('/social-cart/')
+        return Response({'status': 'SUCCESS'}, HTTP_201_CREATED)
 
 class GroupViewSet(BaseApiView, ModelViewSet):
     serializer_class = GroupSerializer

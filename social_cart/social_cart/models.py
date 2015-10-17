@@ -161,4 +161,3 @@ def create_shopper(sender, instance, **kwargs):
         Shopper.objects.create(user=instance)
 
 post_save.connect(create_shopper, sender=User)
-

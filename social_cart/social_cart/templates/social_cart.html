@@ -3,13 +3,33 @@
 {% block content %}
 
 <div id="products" class="social products">
+    <div id="invitees-div" class="container">
+        <h3>Notify your friends:</h3>
+        <p><small>Touch to select</small></p>
+        <div class="thumbnail invitees">
+            <h4>Groups:</h4>
+            <div id="invitee-groups">
+                <p>You need to get grouping! Navigate to Groups to start!</p>
+                <!-- dyanic content here -->
+            </div>
+            <h4>Friends:</h4>
+            <div id="invitee-friends">
+                <p>Aww! No friends here yet! Navigate to Friends to find some!</p>
+                <!-- dyanic content here -->
+            </div>
+            <div class="bg-primary notify">Notify!</div>
+        </div>
+    </div>
+
     <div id="products-div">
-        <h4>Here are the products your friends have added!</h4>
-        <!-- dynamic content goes here -->
+        <div class="container">
+            <h4>Social Cart Items:</h4>
+        </div>
+            <!-- dynamic content goes here -->
     </div>
     <div id="#products-div">
-        <div id="waiting" class="hidden">
-            <h5>Nothing to show yet! Waiting some awesome additions!</h5>
+        <div class="container " id="waiting">
+            <h5><em>Nothing to show yet! Waiting some awesome additions!</em></h5>
         </div>
     </div>
     <div class="finalize">
@@ -21,11 +41,32 @@
 </div>
 
 {% verbatim card %}
+
+<script type="text/x-handlebars-template" id="template-friends">
+    <div id="friends-div">
+        {{#each friends}}
+            <div id="{{ this.user }}" class="friend well">
+                <p>{{ this.username }}</p>
+            </div>
+        {{/each}}
+    </div>
+</script>
+
+<script type="text/x-handlebars-template" id="template-groups">
+    <div id="groups-div">
+        {{#each groups}}
+            <div id="{{ this.pk }}" class="group well">
+                <p>{{ this.name }}</p>
+            </div>
+        {{/each}}
+    </div>
+</script>
+
 <script type="text/x-handlebars-template" id="template-product-cards">
     {{#each products}}
     <div class="col-xs-6 col-md-4">
         <div class="product cart">
-            <a href="#" class="thumbnail product-thumbs">
+            <div href="#" class="thumbnail product-thumbs">
                 <button class="rollback pull-left btn btn-danger">Rollback</button>
                 <img src="{{ this.image_url }}" class="img-responsive" alt="Responsive image">
 
@@ -51,7 +92,7 @@
                         </div>
                     </div>
                 </div>
-            </a>
+            </div>
         </div>
     </div>
     {{/each}}
@@ -65,23 +106,69 @@
 {% block page_specific_js %}
 existing_ids = [];
 
+
+function greenifyGroup () {
+    console.log('greenified');
+    $(this).addClass('bg-success selected-group');
+}
+
+function greenifyFriend () {
+    console.log('greenified');
+    $(this).addClass('bg-success selected-friend');
+}
+
+function getGroups() {
+    console.log('getting groups');
+    $.ajax({
+        url: '/groups/',
+        success: function(data){
+            console.log(data);
+            var groups = {"groups": data}
+            var source = $("#template-groups").html();
+            var template = Handlebars.compile(source);
+            var html = template(groups);
+            $('#invitee-groups').html(html);
+            $('.group.well').click(greenifyGroup);
+        },
+        dataType: "json",
+        crossDomain: true,
+        cache: false
+    });
+}
+
+
+function getFriends() {
+    console.log('getting friends');
+    $.ajax({
+        url: '/friends/',
+        success: function(data){
+            console.log(data);
+            var friends = {"friends": data}
+            var source = $("#template-friends").html();
+            var template = Handlebars.compile(source);
+            var html = template(friends);
+            $('#invitee-friends').html(html);
+            $('.friend.well').click(greenifyFriend);
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json"
+    });
+}
+
+
 (function poll(){
    console.log('polling');
    setTimeout(function(){
       doGet();
       poll();
-
-  }, 10000);
+  }, 20000);
 })();
 
 function doGet() {
-    $.ajax({ url: '/social-cart/update/', success: function(data){
-        console.log(data);
-        if ('redirect' in data) {
-            // data.redirect contains the string URL to redirect to
-            console.log('redirect');
-            window.location.href = data.redirect;
-        } else {
+    $.ajax({
+        url: '/social-cart/update/',
+        success: function(data){
             if (data.length > 0) {
                 $('#waiting').hide();
                 var new_products = [];
@@ -104,17 +191,64 @@ function doGet() {
             else {
                 $('#waiting').show();
             }
-        }
-      }, dataType: "json"});
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json"
+    });
 }
 
+
+getGroups();
+getFriends();
 doGet();
 
-$('#finalize_cart').click(function () {
-    $.ajax({ url: '/social-cart/finalize/', method: 'POST', success: function(data){
-        console.log(data);
-        $('#success-msg').html(data.detail);
-      }, dataType: "json"});
+$('.notify').click(function() {
+    friends = $(".selected-friend");
+    groups = $(".selected-group");
+    fr = [];
+    gr = [];
+    for (var i=0, len=friends.length; i < len; i++) {
+        fr.push(friends[i].id);
+    }
+    for (var i=0, len=groups.length; i < len; i++) {
+        gr.push(groups[i].id);
+    }
+    data = {"friends": fr, "groups": gr}
+    console.log(data);
+    $.ajax({
+        url: '/shop/',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        dataType: 'json',
+        crossDomain: true,
+        cache: false,
+        method: 'POST',
+        success: function(data) {
+            $('.thumbnail.invitees').html("<h5>Your friends have been notified! Wait and Watch the cart grow! Kudos :D</h5>")
+        }
+    });
 });
+
+$('#finalize_cart').click(function () {
+    $.ajax({
+        url: '/social-cart/finalize/',
+        method: 'POST',
+        success: function(data){
+            console.log(data);
+            $('#success-msg').html("<h4>Purchase is complete! Kudos!</h4>");
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json"
+    });
+});
+
+
+$( document ).ready(function() {
+    $('.group.well').click(greenifyGroup);
+    $('.friend.well').click(greenifyFriend);
+});
+
 
 {% endblock page_specific_js %}

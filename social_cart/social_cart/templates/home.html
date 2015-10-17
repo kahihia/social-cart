@@ -4,14 +4,19 @@
 <div class="home">
     <div class="row jumbotron">
         <div class="shop-now">
-            <h3>At the Store or Ordering Online!</h3>
-            <h4>Why not pick something up for your friends?</h4>
+            <h2>Welcome to Social Cart!</h2>
+            <h4><em>Your social shopping companion</em></h4>
+            <h4>At the store, or ordering online, invite your friends and have a great time!</h4>
             <a href="/social-cart/">
                 <button class="btn btn-shop">Go Social Shopping!</button>
             </a>
         </div>
     </div>
     <div id="products" class="products">
+        <div class="well">
+            <h4><strong>Exciting Electronics at Rollback Prices</strong></h4>
+            <h5>Pick a few and add to your friend's social cart!</h5>
+        </div>
         <div id="products-div" class="row">
             <!-- dynamic content goes here -->
         </div>
@@ -20,11 +25,13 @@
                 <!--<button id="add_cart" class="btn btn-info">Add to Cart!</button>-->
             <!--</div>-->
             <!--<div class="col-xs-6">-->
-                <button id="add_social_cart" class="btn btn-success">Add to Social Cart!</button>
+                <button id="add_social_cart" class="btn btn-success" style="width: 100%; min-height: 30px;">
+                    <h5>Add to Social Cart!</h5>
+                </button>
             <!--</div>-->
         </div>
         <div class="cart-thumb">
-            <p class="no-carts hidden">Aww! None of your friends are out and about right now! Wait for the notification or check again later!</p>
+            <p class="no-carts">Aww! None of your friends are out and about right now! Wait for the notification or check again later!</p>
             <div id="carts-div" class="input-group">
             <!-- Dynamic content of carts here -->
             </div>
@@ -37,7 +44,7 @@
     {{#each products}}
     <div class="col-xs-6 col-md-4">
         <div class="product">
-            <a href="#" class="thumbnail product-thumbs">
+            <div class="thumbnail product-thumbs">
                 <button class="rollback pull-left btn btn-danger">Rollback</button>
                 <img src="{{ this.image_url }}" class="img-responsive" alt="Responsive image">
 
@@ -71,7 +78,7 @@
                           </button>
                         </span>
                 </div>
-            </a>
+            </div>
         </div>
     </div>
     {{/each}}
@@ -79,7 +86,7 @@
 
 <script type="text/x-handlebars-template" id="template-social-carts">
     <div class="cart thumbnail">
-        <p>Here are the available carts!:</p>
+        <p>Available Social Carts:</p>
         {{#each carts}}
             <div class="radio">
               <label>
@@ -119,20 +126,28 @@ function cartItems(data) {
 $.getJSON('/products/?format=json', cartItems);
 
 $('#add_social_cart').click(function () {
-    $.ajax({ url: '/social-cart-add/', success: function(data){
-        if (data.length == 0) {
-            $('.no-carts').show();
-        } else {
-            $('.no-carts').hide();
+    $.ajax({
+        url: '/social-cart-add/',
+        crossDomain: true,
+        cache: false,
+        success: function(data){
+            <!--data = JSON.parse(data);-->
             console.log(data);
-            var source = $("#template-social-carts").html();
-            var template = Handlebars.compile(source);
-            var html = template(data);
-            console.log(html);
-            $('#carts-div').html(html);
-            $("input[name=cartsAvailable]:radio").change(addToCart);
-        }
-      }, dataType: "json"});
+            debugger;
+            if (data.carts.length == 0) {
+                $('.no-carts').show();
+            } else {
+                $('.no-carts').hide();
+                console.log(data);
+                var source = $("#template-social-carts").html();
+                var template = Handlebars.compile(source);
+                var html = template(data);
+                console.log(html);
+                $('#carts-div').html(html);
+                $("input[name=cartsAvailable]:radio").change(addToCart);
+            }
+        },
+        dataType: "json"});
 });
 
 
@@ -157,6 +172,8 @@ function addToCart() {
         url: '/social-cart-add/',
         method: 'POST',
         data: JSON.stringify(products),
+        crossDomain: true,
+        cache: false,
         contentType: 'application/json',
         dataType: 'json',
         success: function(data){

@@ -6,8 +6,11 @@ body {
     text-align: center;
 }
 
-.shop-now {
+.row.jumbotron {
     background-color: #6f5499;
+}
+
+.shop-now {
     padding: 30px;
     color: white;
 }
@@ -170,4 +173,36 @@ a:hover, a:active, a:focus {
 .friends {
     width: 100%;
     background-color: light-gray;
+}
+
+#invitees-div {
+    margin-top: 40px;
+}
+
+.friend.well, .group.well {
+    margin-bottom: 4px;
+    padding: 8px;
+}
+
+
+.friend.well p, .group.well p {
+    margin: 0 auto;
+}
+
+.notify {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.bg-success.well {
+    background-color: #5cb85c;
+}
+
+#success-msg {
+    text-align: center;
+}
+
+.no-carts, .waiting {
+    display: none;
 }

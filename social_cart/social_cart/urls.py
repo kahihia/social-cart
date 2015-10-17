@@ -35,8 +35,6 @@ urlpatterns = [
     url(r'^social-cart/update/$', views.SocialCartShopperView.as_view()),
     url(r'^social-cart/finalize/$', views.SocialCartShopperView.as_view()),
     url(r'^social-cart-add/$', views.SocialCartInviteeView.as_view()),
-    url(r'^cart/$', views.CartTemplateView.as_view()),
-    url(r'^cart/add/$', views.CartUpdateView.as_view()),
     url(r'^go-social/$', views.SocialCartInviteeView.as_view()),
 ]
 
