@@ -4,30 +4,16 @@
         "uninstalled": []
     },
     "config_munge": {
-        "files": {
-            "config.xml": {
-                "parents": {
-                    "/*": [
-                        {
-                            "xml": "<feature name=\"Device\"><param name=\"browser-package\" value=\"Device\" /></feature>",
-                            "count": 1
-                        }
-                    ]
-                }
-            }
-        }
+        "files": {}
     },
     "installed_plugins": {
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "io.cordova.hellocordova"
         },
-        "org.apache.cordova.device": {
+        "cordova-plugin-inappbrowser": {
             "PACKAGE_NAME": "io.cordova.hellocordova"
         },
-        "org.apache.cordova.console": {
-            "PACKAGE_NAME": "io.cordova.hellocordova"
-        },
-        "org.apache.cordova.dialogs": {
+        "com.phonegap.plugins.PushPlugin": {
             "PACKAGE_NAME": "io.cordova.hellocordova"
         }
     },

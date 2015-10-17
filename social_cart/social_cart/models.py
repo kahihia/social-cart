@@ -16,6 +16,7 @@ CART_TYPES = (
 
 class Shopper(models.Model):
     user = models.ForeignKey(User)
+    gcm_key = models.CharField(max_length=400, null=True, blank=True)
 
     def __unicode__(self):
         return self.user.username
@@ -40,11 +41,30 @@ class Shopper(models.Model):
     def get_friends(self):
         return Friend.get_friends(self)
 
-    def notify_cart_finalized(self):
-        pass
+    def notify_cart_created(self, cart):
+        from .gcm import send_gcm_notification
+        inviter = cart.user.user.username.title()
+        data = {
+            'to': self.gcm_key,
+            'notification': {
+                'title': '{} created a Social Cart!'.format(inviter),
+                'text': '{} wants you to add to the social cart! Happy shopping'.format(inviter)
+            }
+        }
+        send_gcm_notification(data)
 
-    def notify_cart_created(self):
-        pass
+    def notify_cart_finalized(self, cart):
+        from .gcm import send_gcm_notification
+        inviter = cart.user.user.username.title()
+        data = {
+            'to': self.gcm_key,
+            'notification': {
+                'title': '{} is done Shopping!'.format(inviter),
+                'text': '{} has picked up the items you added! Cheers!'.format(inviter)
+            }
+        }
+        send_gcm_notification(data)
+
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
@@ -64,6 +84,7 @@ class Product(models.Model):
     def __unicode__(self):
         return '{}-{}-{}'.format(self.id, self.item_id, self.name[:15])
 
+
 class Cart(models.Model):
     user = models.ForeignKey(Shopper, related_name='carts')
     type = models.CharField(choices=CART_TYPES, max_length=2)
@@ -73,7 +94,7 @@ class Cart(models.Model):
         self.is_active = False
         self.save()
         for invitee in self.cartinvitees.all():
-            invitee.notify_cart_finalized()
+            invitee.notify_cart_finalized(self)
 
 
 class CartItem(models.Model):

@@ -159,9 +159,6 @@ SOCIALACCOUNT_PROVIDERS = \
 
 LOGIN_REDIRECT_URL = '/home/'
 
-WALMART_API_KEY = '84quzkku9b3tmyqse3wgmk3m'
-
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -194,3 +191,7 @@ LOGGING = {
 }
 
 CSRF_COOKIE_SECURE = True
+
+GOOGLE_API_KEY = 'AIzaSyAznafFFg7BGmH7TkKP2-7fyPAYY5OGmKI'
+
+WALMART_API_KEY = '84quzkku9b3tmyqse3wgmk3m'

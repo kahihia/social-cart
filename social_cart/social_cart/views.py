@@ -40,6 +40,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'home.html'
 
     def get_context_data(self, **kwargs):
+        import pdb; pdb.set_trace()
+        if 'gcm_key' in self.request.session:
+            set_gcm_key(self.request.user, self.request.session.pop('gcm_key'))
+
         context = super(HomeView, self).get_context_data(**kwargs)
         return context
 
@@ -344,3 +348,38 @@ class GroupViewSet(BaseApiView, ModelViewSet):
         except ValueError as e:
             logger.exception('User is not in friends list')
             raise Http404
+
+
+def login_redirect_view(request):
+    import pdb; pdb.set_trace()
+
+    if request.user.is_authenticated():
+        if 'gcm_key' in request.GET:
+            set_gcm_key(request.user, request.GET['gcm_key'])
+        return HttpResponseRedirect('/home/')
+    else:
+        if 'gcm_key' in request.GET:
+            request.session['gcm_key'] = request.GET['gcm_key']
+        return HttpResponseRedirect('/login/')
+
+def gcm_key_view(request):
+    if not request.user.is_authenticated():
+        logger.exception('Not Logged in')
+        return JsonResponse({'status': 'FAIL'})
+    if 'gcm_key' not in request.GET:
+        logger.exception('Missing Key')
+        raise Http404
+    user = request.user
+    shopper = Shopper.objects.get(user=user)
+    shopper.gcm_key = request.GET['gcm_key']
+    shopper.save()
+    return JsonResponse({'status': 'SUCCESS'})
+
+
+def set_gcm_key(user, gcm_key):
+    try:
+        shopper = Shopper.objects.get(user=user)
+        shopper.gcm_key = gcm_key
+        shopper.save()
+    except Exception as e:
+        logger.exception(e)

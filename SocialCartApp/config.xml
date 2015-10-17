@@ -9,7 +9,8 @@
     </author>
     <content src="index.html" />
     <plugin name="cordova-plugin-whitelist" version="1" />
-    <access origin="*" />
+    <!--<access origin="*" />-->
+    <access origin="www.socialgraph.com" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <allow-intent href="tel:*" />
@@ -23,5 +24,4 @@
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
     </platform>
-    <icon src="res/cart.png" platform="ios" width="57" height="57" density="mdpi" />
 </widget>

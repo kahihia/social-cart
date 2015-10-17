@@ -33,17 +33,95 @@ var app = {
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        app.receivedEvent('deviceready');
+        //app.receivedEvent('deviceready');
+        //window.location="http://www.socialcart.com/";
+
+        var options = {
+            location: 'no',
+            clearcache: 'yes',
+        };
+        window.open = cordova.InAppBrowser.open;
+        var ref = cordova.InAppBrowser.open("http://www.socialcart.com/", "_blank", "location=no");
+        
+        var pushNotification = window.plugins.pushNotification;
+        pushNotification.register(
+            successHandler, 
+            errorHandler, 
+            {
+                'senderID':'298895233032',
+                'ecb':'onNotificationGCM' // callback function
+            }
+        );
+
     },
+
+
     // Update DOM on a Received Event
+    /*
     receivedEvent: function(id) {
         var parentElement = document.getElementById(id);
-        var content = parentElement.querySelector('.visible-content');
+        var listeningElement = parentElement.querySelector('.listening');
+        var receivedElement = parentElement.querySelector('.received');
+
         listeningElement.setAttribute('style', 'display:none;');
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
-    }
+    } */
 };
+
+function successHandler(result) {
+    alert('Success');
+    deviceRegistered(result);
+}
+
+function errorHandler(error) {
+    alert('Error');
+    console.log('Error: '+ error);
+}
+
+
+function onNotificationGCM(e) {
+    console.log('Notification Receoved');
+    switch(e.event) {
+        case 'registered':
+            if (e.regid.length > 0){
+                alert(e.regid);
+                deviceRegistered(e.regid); 
+                }
+        break;
+
+        case 'message':
+            if (e.foreground){
+                // When the app is running foreground. 
+                alert('A Social Cart has popped up! Time to add some stuff!')
+            }
+        break;
+
+        case 'error':
+            console.log('Error: ' + e.msg);
+        break;
+
+        default:
+          console.log('An unknown event was received');
+          break;
+    }
+}    
+
+function deviceRegistered(gcm_key) {
+    console.log("Device Registered");
+    alert('Yowza');
+    $.ajax({
+        url: 'http://www.socialcart.com/gcm_key/',
+        method: 'POST',
+        data: {gcm_key: gcm_key},
+        success: function(data){
+            console.log(data);
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json",
+    });
+}
 
 app.initialize();

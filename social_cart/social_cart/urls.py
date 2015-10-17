@@ -21,7 +21,6 @@ from social_cart import views
 
 admin.autodiscover()
 urlpatterns = [
-    url(r'^$', RedirectView.as_view(pattern_name='social_login')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^home/$', views.HomeView.as_view()),
@@ -36,6 +35,9 @@ urlpatterns = [
     url(r'^social-cart/finalize/$', views.SocialCartShopperView.as_view()),
     url(r'^social-cart-add/$', views.SocialCartInviteeView.as_view()),
     url(r'^go-social/$', views.SocialCartInviteeView.as_view()),
+    url(r'^gcm_key/$', views.gcm_key_view),
+    url(r'^$', views.login_redirect_view),
+
 ]
 
 from rest_framework import routers

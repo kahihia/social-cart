@@ -44,8 +44,14 @@
         crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.3/handlebars.min.js"></script>
 <script src="/static/js/btn.js"></script>
+<script type="text/javascript" src="//cdn.pubnub.com/pubnub-3.7.4.min.js"></script>
 
 <script>
+var pubnub = PUBNUB.init({
+    subscribe_key: 'sub-c-19e7d21c-74ff-11e5-960b-02ee2ddab7fe',
+    publish_key:   'pub-c-56137350-6388-4717-92c0-a1e0037e3848',
+});
+
 {% block page_specific_js %} {% endblock page_specific_js %}
 </script>
 
