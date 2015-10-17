@@ -31,10 +31,13 @@ urlpatterns = [
     url(r'^friends/$', views.FriendsView.as_view()),
     url(r'^products/$', views.ProductsView.as_view()),
     url(r'^shop/$', views.GoShopView.as_view()),
-    url(r'^social-cart/', views.SocialCartTemplateView.as_view()),
-    url(r'^social-cart/update/', views.SocialCartShopperView.as_view()),
-    url(r'^social-cart/finalize/', views.SocialCartShopperView.as_view()),
-    url(r'^social-cart-add/', views.SocialCartInviteeView.as_view()),
+    url(r'^social-cart/$', views.SocialCartTemplateView.as_view()),
+    url(r'^social-cart/update/$', views.SocialCartShopperView.as_view()),
+    url(r'^social-cart/finalize/$', views.SocialCartShopperView.as_view()),
+    url(r'^social-cart-add/$', views.SocialCartInviteeView.as_view()),
+    url(r'^cart/$', views.CartTemplateView.as_view()),
+    url(r'^cart/add/$', views.CartUpdateView.as_view()),
+    url(r'^go-social/$', views.SocialCartInviteeView.as_view()),
 ]
 
 from rest_framework import routers

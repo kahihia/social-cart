@@ -50,6 +50,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'social_cart.disable.DisableCSRF',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -159,3 +160,37 @@ SOCIALACCOUNT_PROVIDERS = \
 LOGIN_REDIRECT_URL = '/home/'
 
 WALMART_API_KEY = '84quzkku9b3tmyqse3wgmk3m'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file':{
+             'level':'DEBUG',
+              'class':'logging.FileHandler',
+              'filename': '/tmp/socialcart.log',
+              # 'formatter': 'standard'
+               },
+
+        'console':{
+             'level':'DEBUG',
+              'class':'logging.StreamHandler',
+              # 'formatter': 'standard'
+               },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'social_cart': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+}
+
+CSRF_COOKIE_SECURE = True

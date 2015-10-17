@@ -15,11 +15,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_204_NO_CONTENT
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_307_TEMPORARY_REDIRECT
 from rest_framework.decorators import detail_route
 
-from .serializers import (ShopperSerializer, FriendSerializer, GroupListSerializer, GroupMemberSerializer,
-                          GroupSerializer, ProductSerializer, CartInviteSerializer, CartItemSerializer)
+from .serializers import (ShopperSerializer, FriendSerializer, GroupMemberSerializer,
+                          GroupSerializer, ProductSerializer, CartInviteSerializer, CartItemListSerializer)
 from .models import Shopper, Cart, CartItem, CartInvite, Friend, Group, GroupMember, Product
 
 logger = logging.getLogger(__name__)
@@ -47,9 +47,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
 class SocialCartTemplateView(LoginRequiredMixin, TemplateView):
     template_name = 'social_cart.html'
 
-    def get_context_data(self, request, **kwargs):
+    def get_context_data(self, **kwargs):
         try:
-            shopper = Shopper.objects.get(user=request.user)
+            shopper = Shopper.objects.get(user=self.request.user)
         except Shopper.DoesNotExist as e:
             logger.exception('User Not Found')
             raise Http404
@@ -60,6 +60,26 @@ class SocialCartTemplateView(LoginRequiredMixin, TemplateView):
             context.update({'cart': cart.pk})
         except IndexError as e:
             logger.info('No Active cart found')
+        return context
+
+
+class CartTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = 'invitees.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(CartTemplateView, self).get_context_data(**kwargs)
+        return context
+
+
+class CartUpdateView(BaseApiView):
+    pass
+
+
+class CartInviteTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = 'invitees.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(CartInviteTemplateView, self).get_context_data(**kwargs)
         return context
 
 
@@ -75,14 +95,17 @@ class SocialCartInviteeView(BaseApiView):
         shopper = self.get_object(request.user)
         social_carts = CartInvite.objects.filter(invitee=shopper, is_active=True)
         serializer = CartInviteSerializer(social_carts, many=True)
-        return Response(serializer.data, HTTP_200_OK)
+        return Response({'carts': serializer.data}, HTTP_200_OK)
 
     def post(self, request, format=None):
-        serializer = CartItemSerializer(request.data)
+        shopper = self.get_object(request.user)
+        data = request.data
+        [d.update({'added_by': shopper.pk}) for d in data]
+        serializer = CartItemListSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(status=HTTP_201_CREATED)
-
+            return Response({"status": "SUCCESS"}, status=HTTP_201_CREATED)
+        import pdb; pdb.set_trace()
         return Response(status=HTTP_400_BAD_REQUEST)
 
 
@@ -99,25 +122,31 @@ class SocialCartShopperView(BaseApiView):
             if 'cart' in request.GET:
                 return Cart.objects.get(pk=request.GET['cart'])
             else:
-                return Cart.objects.filter(invitee=shopper, is_active=True).order_by('-created_at')[0]
+                return Cart.objects.filter(user=shopper, is_active=True).order_by('-pk')[0]
         except (IndexError, Cart.DoesNotExist,) as e:
-            raise Http404
+            return None
 
     def get(self, request, format=None):
         shopper = self.get_object(request.user)
         social_cart = self.get_cart(request, shopper)
 
+        if not social_cart:
+            return Response({'redirect': '/home/'})
+
         cart_items = social_cart.cartitems.all()
         products = [cart_item.product for cart_item in cart_items]
         serializer = ProductSerializer(products, many=True)
+        data = serializer.data
+        for index, cart_item in enumerate(cart_items):
+            data[index].update({'added_by': cart_item.added_by.user.username, 'quantity': cart_item.quantity})
 
-        return Response(serializer.data, HTTP_200_OK)
+        return Response(data, HTTP_200_OK)
 
     def post(self, request, format=None):
         shopper = self.get_object(request.user)
         social_cart = self.get_cart(request, shopper)
         social_cart.finalize()
-        return Response(status=HTTP_201_CREATED)
+        return Response({'status': 'SUCCESS', 'detail': 'Awesome job! Your friends thank you!!'}, status=HTTP_201_CREATED)
 
 
 class SocialCartHomeView(BaseApiView):
@@ -191,7 +220,7 @@ class FriendsView(BaseApiView):
 
 class ProductsView(BaseApiView):
     def get(self, request, format=None):
-        products = Product.objects.all()
+        products = Product.objects.all()[:2]
         serializer = ProductSerializer(products, many=True)
         return Response({'products': serializer.data}, HTTP_200_OK)
 
@@ -238,6 +267,13 @@ class GoShopView(BaseApiView):
         return HttpResponseRedirect('/social-cart/')
 
 class GroupViewSet(BaseApiView, ModelViewSet):
+    serializer_class = GroupSerializer
+
+    def get_queryset(self):
+        user = self.get_shopper(self.request.user)
+        groups = Group.objects.filter(user=user)
+        return groups
+
     def get_shopper(self, shopper_id):
         try:
             return Shopper.objects.get(user=shopper_id)
@@ -253,16 +289,19 @@ class GroupViewSet(BaseApiView, ModelViewSet):
             raise Http404
 
     def retrieve(self, request, format=None):
-        user = self.get_shopper(request.user)
-        groups = Group.objects.filter(user=user)
-        serializer = GroupListSerializer(groups)
+        groups = self.get_queryset()
+        serializer = self.get_serializer_class(groups, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
     def create(self, request, format=None):
-        group_name = self.request.POST['group_name']
-        user = self.get_shopper(request.user)
-        group = Group.objects.create(name=group_name, user=user)
-        serializer = GroupSerializer(group)
+        data = request.data
+        data.update({'user': self.get_shopper(request.user).pk})
+        serializer = GroupSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+        # group_name = self.request.POST['group_name']
+        # user = self.get_shopper(request.user)
+        # group = Group.objects.create(name=group_name, user=user)
         return Response(serializer.data, HTTP_201_CREATED)
 
     @detail_route(methods=['put'])

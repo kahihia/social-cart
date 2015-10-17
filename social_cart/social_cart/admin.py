@@ -23,11 +23,17 @@ class FriendAdmin(admin.ModelAdmin):
 
 class CartItemInline(admin.StackedInline):
     model = CartItem
+    extra = 0
+
+
+class CartInviteeInline(admin.StackedInline):
+    model = CartInvite
+    extra = 0
 
 
 class CartAdmin(admin.ModelAdmin):
     model = Cart
-    inlines = [CartItemInline, ]
+    inlines = [CartItemInline, CartInviteeInline,]
 
 
 class ShopperAdmin(admin.ModelAdmin):

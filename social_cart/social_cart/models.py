@@ -17,6 +17,9 @@ CART_TYPES = (
 class Shopper(models.Model):
     user = models.ForeignKey(User)
 
+    def __unicode__(self):
+        return self.user.username
+
     @property
     def username(self):
         return self.user.username
@@ -58,6 +61,8 @@ class Product(models.Model):
     stock = models.CharField(max_length=20)
     reviews = models.IntegerField()
 
+    def __unicode__(self):
+        return '{}-{}-{}'.format(self.id, self.item_id, self.name[:15])
 
 class Cart(models.Model):
     user = models.ForeignKey(Shopper, related_name='carts')
@@ -67,14 +72,13 @@ class Cart(models.Model):
     def finalize(self):
         self.is_active = False
         self.save()
-        for invitee in self.invitees.all():
+        for invitee in self.cartinvitees.all():
             invitee.notify_cart_finalized()
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='cartitems')
     product = models.ForeignKey(Product)
-    item_id = models.BigIntegerField()
     quantity = models.IntegerField(default=0)
     created_at = models.DateTimeField('Added At', auto_now_add=True)
     updated_at = models.DateTimeField('Updated At', auto_now_add=True)
@@ -83,7 +87,7 @@ class CartItem(models.Model):
 
 class CartInvite(models.Model):
     owner = models.ForeignKey(Shopper, related_name='owner')
-    cart = models.ForeignKey(Cart)
+    cart = models.ForeignKey(Cart, related_name='cartinvitees')
     invitee = models.ForeignKey(Shopper, related_name='invitees')
     is_active = models.BooleanField()
 
@@ -94,6 +98,7 @@ class CartInvite(models.Model):
     @property
     def get_owner_name(self):
         return self.owner.user.username
+
 
 class Friend(models.Model):
     friend_one = models.ForeignKey(Shopper, related_name='friendone')
@@ -143,7 +148,7 @@ class Group(models.Model):
 
     @property
     def get_members(self):
-        return [{'name': x.user.username, 'pk': x.user.pk} for x in self.groupmembers]
+        return [{'name': x.user.username, 'pk': x.user.pk} for x in self.groupmembers.all()]
 
 
 class GroupMember(models.Model):

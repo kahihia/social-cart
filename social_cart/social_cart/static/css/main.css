@@ -106,6 +106,12 @@ a:hover, a:active, a:focus {
     margin-bottom: 20px;
 }
 
+.product.cart {
+    height: 220px;
+    margin-bottom: 15px;
+}
+
+
 .product p {
     margin-bottom: 2px;
 }
@@ -121,4 +127,47 @@ a:hover, a:active, a:focus {
 
 .input-number {
     height: 28px;
+}
+
+.meta-data, .prod-name {
+    color: #337ab7;
+}
+
+.meta-data {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.prod-name {
+    font-size: 10px;
+}
+
+.finalize {
+    text-align: center;
+}
+
+.social.products {
+    margin-top: 50px;
+}
+
+#products-div {
+    display: inline-block;
+}
+
+.container.main_body {
+    padding-bottom: 20px;
+}
+
+.cart-thumb {
+    margin-top: 20px;
+}
+
+.cart-thumb #carts-div {
+    min-width: 80%;
+    margin: 0 auto;
+}
+
+.friends {
+    width: 100%;
+    background-color: light-gray;
 }

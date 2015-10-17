@@ -16,11 +16,17 @@
             <!-- dynamic content goes here -->
         </div>
         <div class="row">
-            <div class="col-xs-6">
-                <button id="add_cart" class="btn btn-info">Add to Cart!</button>
-            </div>
-            <div class="col-xs-6">
-                <button id="add_social_cart" class="btn btn-success">Add Social Cart!</button>
+            <!--<div class="col-xs-6">-->
+                <!--<button id="add_cart" class="btn btn-info">Add to Cart!</button>-->
+            <!--</div>-->
+            <!--<div class="col-xs-6">-->
+                <button id="add_social_cart" class="btn btn-success">Add to Social Cart!</button>
+            <!--</div>-->
+        </div>
+        <div class="cart-thumb">
+            <p class="no-carts hidden">Aww! None of your friends are out and about right now! Wait for the notification or check again later!</p>
+            <div id="carts-div" class="input-group">
+            <!-- Dynamic content of carts here -->
             </div>
         </div>
     </div>
@@ -56,7 +62,7 @@
                               <span class="glyphicon glyphicon-minus"></span>
                           </button>
                         </span>
-                    <input type="text" name="{{ this.item_id }}" class="form-control input-number" value="0" min="0"
+                    <input type="text" name="{{ this.id }}" class="cart-item form-control input-number" value="0" min="0"
                            max="100">
                         <span class="input-group-btn">
                           <button type="button" class="btn btn-success btn-number" data-type="plus"
@@ -71,7 +77,22 @@
     {{/each}}
 </script>
 
+<script type="text/x-handlebars-template" id="template-social-carts">
+    <div class="cart thumbnail">
+        <p>Here are the available carts!:</p>
+        {{#each carts}}
+            <div class="radio">
+              <label>
+                <input type="radio" class="cart-names" name="cartsAvailable" id="{{ this.get_cart_id }}" value="{{ this.get_cart_id }}">
+                {{ this.get_owner_name }}
+              </label>
+            </div>
+        {{/each}}
+    </div>
+</script>
+
 {% endverbatim card %}
+
 
 {% endblock content %}
 
@@ -86,14 +107,62 @@ console.log('social cart');
 });
 
 function cartItems(data) {
-console.log(data);
-var source = $("#template-product-cards").html();
-var template = Handlebars.compile(source);
-var html = template(data);
-console.log(html);
-$('#products-div').html(html);
+    var source = $("#template-product-cards").html();
+    var template = Handlebars.compile(source);
+    var html = template(data);
+    $('#products-div').html(html);
+    $(".btn-number").click(btnClick);
+    $(".input-number").keydown(keyDown);
+    $(".input-number").change(inputChange);
 }
 
 $.getJSON('/products/?format=json', cartItems);
+
+$('#add_social_cart').click(function () {
+    $.ajax({ url: '/social-cart-add/', success: function(data){
+        if (data.length == 0) {
+            $('.no-carts').show();
+        } else {
+            $('.no-carts').hide();
+            console.log(data);
+            var source = $("#template-social-carts").html();
+            var template = Handlebars.compile(source);
+            var html = template(data);
+            console.log(html);
+            $('#carts-div').html(html);
+            $("input[name=cartsAvailable]:radio").change(addToCart);
+        }
+      }, dataType: "json"});
+});
+
+
+function addToCart() {
+    var cart_id = $(this).val();
+    products = [];
+    prods = $(".cart-item")
+    for (i=0, len=prods.length; i < len; i++) {
+        prod = $(prods[i]);
+        if (prod.val() > 0) {
+            var product_dict = {
+                "cart": cart_id,
+                "product": prod.attr("name"),
+                "quantity": prod.val(),
+            }
+            products.push(product_dict);
+        }
+    }
+    data = {"data[]": products};
+    debugger;
+    $.ajax({
+        url: '/social-cart-add/',
+        method: 'POST',
+        data: JSON.stringify(products),
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function(data){
+            console.log('success');
+            $('.cart.thumbnail').html("<h5>Successfully added! Happy shopping!</h5>");
+      }, dataType: "json"});
+}
 
 {% endblock page_specific_js %}

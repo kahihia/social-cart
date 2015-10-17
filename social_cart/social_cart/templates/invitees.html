@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+<div class="jumbotron">
+
+</div>
+
+{% verbatim %}
+<script type="text/x-handlebars-template" id="template-friends">
+    <div id="friends-div">
+        {{#each friends}}
+            <div id="{{ this.user }}" class="friend">
+                <p>{{ this.name }}</p>
+            </div>
+        {{/each}}
+    </div>
+</script>
+
+<script type="text/x-handlebars-template" id="template-groups">
+    {{#each groups}}
+    <div id="groups-div">
+        {{#each friends}}
+            <div id="{{ this.name }}" class="friend">
+                <p>{{ this.name }}</p>
+            </div>
+        {{/each}}
+    </div>
+    {{/each}}
+</script>
+{% endblock verbatim %}
+
+{% block content %}
+
+{% endblock content %}
+
+{% block page_specific_js %}
+
+{% endblock page_specific_js %}

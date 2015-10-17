@@ -24,15 +24,8 @@ class FriendSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ('pk', 'name', 'get_members',)
-        read_only_fields = ('name', 'get_members',)
-
-
-class GroupListSerializer(serializers.ModelSerializer, serializers.ListSerializer):
-    class Meta:
-        model = Group
-        fields = ('pk', 'name', 'get_members',)
-        read_only_fields = ('name', 'get_members',)
+        fields = ('pk', 'user', 'name', 'get_members',)
+        read_only_fields = ('get_members',)
 
 
 class GroupMemberSerializer(serializers.ModelSerializer):
@@ -50,8 +43,18 @@ class CartInviteSerializer(serializers.ModelSerializer):
         model = CartInvite
         fields = ('get_owner_name', 'get_cart_id', )
 
+
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
-        fields = ('cart', 'product', 'item_id', 'quantity',)
-        read_only_fields = ('item_id', 'quantity',)
+        fields = ('cart', 'product', 'quantity', 'added_by',)
+
+
+class CartItemListSerializer(serializers.ListSerializer):
+    child = CartItemSerializer()
+
+    def update(self, instance, validated_data):
+        CartItem.objects.update_or_create(
+            cart=instance.cart, product=instance.product,
+            defaults={"cart": instance.cart, "product": instance.product, "quantity": instance.quantity}
+        )

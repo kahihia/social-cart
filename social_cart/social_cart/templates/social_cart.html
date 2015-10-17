@@ -2,21 +2,119 @@
 
 {% block content %}
 
+<div id="products" class="social products">
+    <div id="products-div">
+        <h4>Here are the products your friends have added!</h4>
+        <!-- dynamic content goes here -->
+    </div>
+    <div id="#products-div">
+        <div id="waiting" class="hidden">
+            <h5>Nothing to show yet! Waiting some awesome additions!</h5>
+        </div>
+    </div>
+    <div class="finalize">
+        <button id="finalize_cart" class="btn btn-warning">Finalize Social Cart!</button>
+    </div>
+    <div class="success">
+        <p id="success-msg"></p>
+    </div>
+</div>
+
+{% verbatim card %}
+<script type="text/x-handlebars-template" id="template-product-cards">
+    {{#each products}}
+    <div class="col-xs-6 col-md-4">
+        <div class="product cart">
+            <a href="#" class="thumbnail product-thumbs">
+                <button class="rollback pull-left btn btn-danger">Rollback</button>
+                <img src="{{ this.image_url }}" class="img-responsive" alt="Responsive image">
+
+                <div class="overlays">
+                    <p class="price">&#36;{{ this.sale_price }}</p>
+                </div>
+                <div class="overlays-review">
+                    <img src="{{ this.rating_url }}" class="pull-left img-responsive img-rating"
+                         alt="Rating: {{ this.rating }}">
+                    <button class="pull-right btn reviews">Reviews<span
+                            class="badge">{{ this.reviews }}</span></button>
+                </div>
+                <div class="prod-name">
+                    <p class="product-name">{{ this.name }}</p>
+                </div>
+                <div class="meta-data">
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <p class="added-info">{{ this.added_by }}</p>
+                        </div>
+                        <div class="col-xs-6">
+                            <p class="quantity-info">Qty: {{ this.quantity }}</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    {{/each}}
+</script>
+
+{% endverbatim card %}
+
 
 {% endblock content %}
 
-
 {% block page_specific_js %}
-existing_ids = []
+existing_ids = [];
+
 (function poll(){
+   console.log('polling');
    setTimeout(function(){
-      $.ajax({ url: '/social-cart/update/', success: function(data){
+      doGet();
+      poll();
 
-
-        //Setup the next poll recursively
-        poll();
-      }, dataType: "json"});
-  }, 30000);
+  }, 10000);
 })();
+
+function doGet() {
+    $.ajax({ url: '/social-cart/update/', success: function(data){
+        console.log(data);
+        if ('redirect' in data) {
+            // data.redirect contains the string URL to redirect to
+            console.log('redirect');
+            window.location.href = data.redirect;
+        } else {
+            if (data.length > 0) {
+                $('#waiting').hide();
+                var new_products = [];
+                var products = data;
+                for (var i = 0, len = products.length; i < len; i++) {
+                    product_id = products[i].id
+                    var exist = $.inArray(product_id, existing_ids);
+                    if (exist == -1) {
+                        existing_ids.push(product_id);
+                        new_products.push(products[i]);
+                        var new_data = {}
+                        new_data.products = new_products
+                        var source = $("#template-product-cards").html();
+                        var template = Handlebars.compile(source);
+                        var html = template(new_data);
+                        $('#products-div').append(html);
+                    }
+                }
+            }
+            else {
+                $('#waiting').show();
+            }
+        }
+      }, dataType: "json"});
+}
+
+doGet();
+
+$('#finalize_cart').click(function () {
+    $.ajax({ url: '/social-cart/finalize/', method: 'POST', success: function(data){
+        console.log(data);
+        $('#success-msg').html(data.detail);
+      }, dataType: "json"});
+});
 
 {% endblock page_specific_js %}
