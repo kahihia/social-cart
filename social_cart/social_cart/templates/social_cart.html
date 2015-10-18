@@ -12,11 +12,13 @@
                 <p>You need to get grouping! Navigate to Groups to start!</p>
                 <!-- dyanic content here -->
             </div>
+            <hr>
             <h4>Friends:</h4>
             <div id="invitee-friends">
                 <p>Aww! No friends here yet! Navigate to Friends to find some!</p>
                 <!-- dyanic content here -->
             </div>
+            <hr>
             <div class="bg-primary notify">Notify!</div>
         </div>
     </div>
@@ -24,6 +26,7 @@
     <div id="products-div">
         <div class="container">
             <h4>Social Cart Items:</h4>
+            <hr>
         </div>
             <!-- dynamic content goes here -->
     </div>
@@ -33,7 +36,8 @@
         </div>
     </div>
     <div class="finalize">
-        <button id="finalize_cart" class="btn btn-warning">Finalize Social Cart!</button>
+        <hr>
+        <button id="finalize_cart" class="btn btn-warning" style="width: 80%">Finalize Social Cart!</button>
     </div>
     <div class="success">
         <p id="success-msg"></p>
@@ -66,7 +70,7 @@
     {{#each products}}
     <div class="col-xs-6 col-md-4">
         <div class="product cart">
-            <div href="#" class="thumbnail product-thumbs">
+            <div class="thumbnail product-thumbs">
                 <button class="rollback pull-left btn btn-danger">Rollback</button>
                 <img src="{{ this.image_url }}" class="img-responsive" alt="Responsive image">
 
@@ -109,12 +113,20 @@ existing_ids = [];
 
 function greenifyGroup () {
     console.log('greenified');
-    $(this).addClass('bg-success selected-group');
+    if ($(this).hasClass('bg-success')) {
+        $(this).removeClass('bg-success selected-group');
+    } else {
+        $(this).addClass('bg-success selected-group');
+    }
 }
 
 function greenifyFriend () {
     console.log('greenified');
-    $(this).addClass('bg-success selected-friend');
+    if ($(this).hasClass('bg-success')) {
+        $(this).removeClass('bg-success selected-friend');
+    } else {
+        $(this).addClass('bg-success selected-friend');
+    }
 }
 
 function getGroups() {
@@ -166,7 +178,7 @@ function getFriends() {
    setTimeout(function(){
       doGet();
       poll();
-  }, 20000);
+  }, 10000);
 })();
 
 function doGet() {
@@ -174,14 +186,15 @@ function doGet() {
         url: '/social-cart/update/',
         success: function(data){
             if (data.length > 0) {
+                debugger;
                 $('#waiting').hide();
-                var new_products = [];
                 var products = data;
                 for (var i = 0, len = products.length; i < len; i++) {
                     product_id = products[i].id
                     var exist = $.inArray(product_id, existing_ids);
                     if (exist == -1) {
                         existing_ids.push(product_id);
+                        var new_products = [];
                         new_products.push(products[i]);
                         var new_data = {}
                         new_data.products = new_products

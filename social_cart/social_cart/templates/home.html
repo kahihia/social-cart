@@ -4,9 +4,11 @@
 <div class="home">
     <div class="row jumbotron">
         <div class="shop-now">
-            <h2>Welcome to Social Cart!</h2>
+            <h2>Walmart Social Cart!</h2>
+            <hr>
             <h4><em>Your social shopping companion</em></h4>
-            <h4>At the store, or ordering online, invite your friends and have a great time!</h4>
+            <h5>At the store, or ordering online, invite your friends and have a great time!</h5>
+            <hr>
             <a href="/social-cart/">
                 <button class="btn btn-shop">Go Social Shopping!</button>
             </a>
@@ -25,7 +27,7 @@
                 <!--<button id="add_cart" class="btn btn-info">Add to Cart!</button>-->
             <!--</div>-->
             <!--<div class="col-xs-6">-->
-                <button id="add_social_cart" class="btn btn-success" style="width: 100%; min-height: 30px;">
+                <button id="add_social_cart" class="btn btn-success" style="width: 80%; min-height: 30px;">
                     Add to Social Cart!
 
                 </button>
@@ -87,7 +89,8 @@
 
 <script type="text/x-handlebars-template" id="template-social-carts">
     <div class="cart thumbnail">
-        <p>Available Social Carts:</p>
+        <h4>Available Social Carts:</h4>
+        <hr>
         {{#each carts}}
             <div class="radio">
               <label>
@@ -95,6 +98,7 @@
                 {{ this.get_owner_name }}
               </label>
             </div>
+            <hr>
         {{/each}}
     </div>
 </script>

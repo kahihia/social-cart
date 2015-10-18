@@ -149,7 +149,7 @@ class Friend(models.Model):
     @classmethod
     def is_friend(cls, shopper_a, shopper_b):
         friend_one, friend_two = Friend.resolve_order(shopper_a, shopper_b)
-        return True if cls.object.filter(friend_one, friend_two).count() else False
+        return True if cls.objects.filter(friend_one=friend_one, friend_two=friend_two).count() else False
 
     @classmethod
     def get_friends(cls, shopper):

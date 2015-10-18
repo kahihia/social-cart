@@ -1,5 +1,6 @@
 body {
     background-color: #F5F5F5;
+    margin-top: 60px;
 }
 
 .login, .home {
@@ -7,6 +8,7 @@ body {
 }
 
 .row.jumbotron {
+    margin-top: -20px;
     background-color: #6f5499;
 }
 
@@ -17,7 +19,7 @@ body {
 
 .btn-shop {
     margin-top: 15px;
-    min-width: 50%;
+    min-width: 80%;
     background-color: #ffcc46;
     color: black;
     font-weight: 700;
@@ -150,7 +152,7 @@ a:hover, a:active, a:focus {
 }
 
 .social.products {
-    margin-top: 50px;
+    margin-top: -40px;
 }
 
 #products-div {
@@ -190,6 +192,7 @@ a:hover, a:active, a:focus {
 }
 
 .notify {
+    margin: 0 auto;
     margin: 10px 0;
     padding: 8px;
     border-radius: 4px;

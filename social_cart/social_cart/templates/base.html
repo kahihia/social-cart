@@ -21,7 +21,9 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a href="#" class="navbar-brand">Social Cart</a>
+        <img class="navbar-brand img-responsive" src="https://www.walmartmoneycard.com/cmsviews/walmart/assets/shared/wm_spark.png"
+                style="padding: 4px;">
+        <a href="/home/" class="navbar-brand">Walmart Social Cart</a>
         {% if request.user %}
             <div class="navbar-brand pull-right" style="color: white">{{ request.user.username }}</div>
         {% endif %}
@@ -29,10 +31,9 @@
     <!-- Collection of nav links and other content for toggling -->
     <div id="navbarCollapse" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
+            <li class="active"><a href="/home/">Home</a></li>
             <li><a href="/social-cart/">Cart</a></li>
-            <li><a href="#">Friends</a></li>
-            <li><a href="#">Groups</a></li>
+            <li><a href="/invitees/">Friends & Groups</a></li>
         </ul>
     </div>
 </nav>

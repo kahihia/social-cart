@@ -308,20 +308,17 @@ class GroupViewSet(BaseApiView, ModelViewSet):
         serializer = GroupSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-        # group_name = self.request.POST['group_name']
-        # user = self.get_shopper(request.user)
-        # group = Group.objects.create(name=group_name, user=user)
         return Response(serializer.data, HTTP_201_CREATED)
 
     @detail_route(methods=['put'])
-    def add_list_friend(self, request, group_id, format=None):
+    def add_list_friend(self, request, pk, format=None):
         user = self.get_shopper(request.user)
-        group = self.get_object(user, group_id)
+        group = self.get_object(user, pk)
         try:
-            friend = self.get_shopper(self.request.GET['friend'])
-            if not user.is_friend(friend):
+            friend = self.get_shopper(request.data['friend'])
+            if not user.is_friends(friend):
                 raise ValueError
-            member = GroupMember.objects.create(group, friend)
+            member = GroupMember.objects.create(group=group, user=friend)
             serializer = GroupMemberSerializer(member)
             return Response(serializer.data, HTTP_201_CREATED)
         except KeyError as e:
@@ -330,16 +327,19 @@ class GroupViewSet(BaseApiView, ModelViewSet):
         except ValueError as e:
             logger.exception('User is not in friends list')
             raise Http404
+        except Shopper.DoesNotExist as e:
+            logger.exception(e)
+            raise Http404
 
     @detail_route(methods=['delete'])
-    def delete_list_friend(self, request, group_id, format=None):
+    def delete_list_friend(self, request, pk, format=None):
         user = self.get_shopper(request.user)
-        group = self.get_object(user, group_id)
+        group = self.get_object(user, pk)
         try:
             friend = self.get_shopper(self.request.GET['friend'])
-            if not user.is_friend(friend):
+            if not user.is_friends(friend):
                 raise ValueError
-            GroupMember.objects.filter(group, friend).delete()
+            GroupMember.objects.filter(group=group, user=friend).delete()
             return Response({'status': 'SUCCESS', 'detail': 'Successfully removed from List'}, HTTP_204_NO_CONTENT)
         except KeyError as e:
             logger.info('Friend parameter missing')

@@ -37,7 +37,7 @@ urlpatterns = [
     url(r'^go-social/$', views.SocialCartInviteeView.as_view()),
     url(r'^gcm_key/$', views.gcm_key_view),
     url(r'^$', views.login_redirect_view),
-
+    url(r'^invitees/$', views.CartInviteTemplateView.as_view()),
 ]
 
 from rest_framework import routers

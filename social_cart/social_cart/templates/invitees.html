@@ -1,37 +1,191 @@
 {% extends 'base.html' %}
+{% block content %}
 
-<div class="jumbotron">
-
+<div class="thumbnail" style="padding-top: 30px;">
+    <div class="container">
+        <div class="container">
+            <h4><strong>View and Manage Friends and Groups.</strong></h4>
+            <hr>
+            <h4>Groups:</h4>
+            <div id="groupings">
+                <h5>No groups created! Go ahead and create some!</h5>
+            </div><br>
+            <form class="form-inline">
+              <div class="form-group" style="float: left;">
+                <label class="sr-only" for="createGroup">Group Name</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="createGroup" placeholder="Group Name">
+                </div>
+              </div>
+              <button id="group-create" type="submit" class="btn btn-primary" style="float: left; margin-left: 5px;;">Create</button>
+            </form>
+        </div>
+        <hr>
+        <div class="container" style="margin: 15px 0px;">
+            <h4>Friends:</h4>
+            <div id="friendships">
+                <h5>No friends here yet!</h5>
+            </div><br>
+            <div id="select-group">
+                <!-- Dynamic Content Here -->
+            </div>
+        </div>
+        <div id="msg" class="container" style="display: block; margin-top: 5px;"></div>
+    </div>
 </div>
 
 {% verbatim %}
-<script type="text/x-handlebars-template" id="template-friends">
+
+<script type="text/x-handlebars-template" id="template-friends-1">
     <div id="friends-div">
         {{#each friends}}
-            <div id="{{ this.user }}" class="friend">
-                <p>{{ this.name }}</p>
+            <div id="{{ this.user }}" class="friend-item well" style="margin-bottom: 4px; padding: 8px;">
+                <p style="margin: 0 auto">{{ this.username }}</p>
             </div>
         {{/each}}
     </div>
 </script>
 
-<script type="text/x-handlebars-template" id="template-groups">
+
+<script type="text/x-handlebars-template" id="template-group-select">
+    <select class="form-control group-select" style="width: 50%; float: left;">
+        <option>Select Group</option>
     {{#each groups}}
+        <option value="{{ this.pk }}">{{ this.name }}</option>
+    {{/each}}
+    </select>
+    <button id="friends-add" type="submit" class="btn btn-primary" style="float:left; margin-left: 5px;">
+        Add to Group
+    </button>
+</script>
+
+<script type="text/x-handlebars-template" id="template-groups-1">
     <div id="groups-div">
-        {{#each friends}}
-            <div id="{{ this.name }}" class="friend">
-                <p>{{ this.name }}</p>
+        {{#each groups}}
+            <div id="{{ this.pk }}" class="group-item well" style="margin-bottom: 4px; padding: 8px;">
+                <p style="margin: 0 auto">{{ this.name }}</p>
             </div>
         {{/each}}
     </div>
-    {{/each}}
 </script>
-{% endblock verbatim %}
 
-{% block content %}
+{% endverbatim %}
+
 
 {% endblock content %}
 
 {% block page_specific_js %}
+
+function greenifyFriend () {
+    console.log('greenified');
+    if ($(this).hasClass('bg-success')) {
+        $(this).removeClass('bg-success selected-friend-1');
+    } else {
+        $(this).addClass('bg-success selected-friend-1');
+    }
+}
+
+
+function getGroups() {
+    console.log('getting groups');
+    $.ajax({
+        url: '/groups/',
+        success: function(data){
+            console.log(data);
+            if (data.length > 0) {
+                var groups = {"groups": data}
+                var source = $("#template-groups-1").html();
+                var template = Handlebars.compile(source);
+                var html = template(groups);
+                $('#groupings').html(html);
+                var source2 = $("#template-group-select").html();
+                var template2 = Handlebars.compile(source2);
+                var html2 = template2(groups);
+                $('#select-group').html(html2);
+                $("#friends-add").click(addToGroup);
+            }
+        },
+        dataType: "json",
+        crossDomain: true,
+        cache: false
+    });
+}
+
+
+function getFriends() {
+    console.log('getting friends');
+    $.ajax({
+        url: '/friends/',
+        success: function(data){
+            console.log(data);
+            if (data.length > 0) {
+                var friends = {"friends": data}
+                var source = $("#template-friends-1").html();
+                var template = Handlebars.compile(source);
+                var html = template(friends);
+                $('#friendships').html(html);
+                $('.friend-item').click(greenifyFriend);
+            }
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json"
+    });
+}
+
+$("#group-create").click(function(e) {
+    e.preventDefault();
+    var groupName = $("#createGroup").val()
+    if (groupName == "") {
+        return;
+    }
+    data = {name: groupName}
+    $.ajax({
+        url: '/groups/',
+        data: data,
+        method: "POST",
+        success: function(data){
+            getGroups();
+        },
+        failure: function(data) {
+            console.log("FAILED");
+        },
+        crossDomain: true,
+        cache: false,
+        dataType: "json"
+    });
+});
+
+function addToGroup() {
+    console.log("Adding");
+    groupNum = $(".group-select").val()
+    if (isNaN(groupNum))
+        return
+    friends = $(".selected-friend-1");
+    url = "/groups/" + groupNum + "/add_list_friend/"
+    for (var i=0, len=friends.length; i < len; i++) {
+        var friend_id = friends[i].id;
+        $.ajax({
+                url: url,
+                data: {friend: friend_id},
+                method: "PUT",
+                success: function(data){
+                    console.log("success");
+                    $("#msg").html("<p>Friend has been added to the selected group!</p>");
+                },
+                failure: function(data) {
+                    console.log("FAILED");
+                },
+                crossDomain: true,
+                cache: false,
+                dataType: "json"
+            });
+    }
+
+
+}
+
+getFriends();
+getGroups();
 
 {% endblock page_specific_js %}
