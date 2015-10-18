@@ -145,6 +145,7 @@ $("#group-create").click(function(e) {
         data: data,
         method: "POST",
         success: function(data){
+            $("#createGroup").val("");
             getGroups();
         },
         failure: function(data) {

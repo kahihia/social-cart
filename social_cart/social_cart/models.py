@@ -167,6 +167,9 @@ class Group(models.Model):
     user = models.ForeignKey(Shopper, related_name='groups')
     name = models.CharField(max_length=10)
 
+    class Meta:
+        unique_together = ("user", "name")
+
     @property
     def get_members(self):
         return [{'name': x.user.username, 'pk': x.user.pk} for x in self.groupmembers.all()]
