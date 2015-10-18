@@ -66,7 +66,7 @@ function deviceRegistered(gcm_key) {
         clearcache: 'yes',
     };
     window.open = cordova.InAppBrowser.open;
-    var url = "http://www.socialcart.com/?gcm_key=" + gcm_key;
+    var url = "http://limitless-earth-4309.herokuapp.com/?gcm_key=" + gcm_key;
     console.log("Redirecting" + url); 
     var ref = cordova.InAppBrowser.open(url, "_blank", "location=no");
 }
