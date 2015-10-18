@@ -1,0 +1,12 @@
+Django
+django-allauth
+djangorestframework
+facepy
+google-api-python-client
+gunicorn
+httplib2
+MySQL-python
+oauth2client
+oauthlib
+requests
+requests-oauthlib
