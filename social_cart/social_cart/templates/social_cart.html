@@ -186,7 +186,6 @@ function doGet() {
         url: '/social-cart/update/',
         success: function(data){
             if (data.length > 0) {
-                debugger;
                 $('#waiting').hide();
                 var products = data;
                 for (var i = 0, len = products.length; i < len; i++) {

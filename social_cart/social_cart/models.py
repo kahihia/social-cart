@@ -67,17 +67,17 @@ class Shopper(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=300)
     item_id = models.BigIntegerField(unique=True)
     msrp = models.FloatField()
     sale_price = models.FloatField()
     upc = models.BigIntegerField()
     shortDescription = models.CharField(max_length=500)
-    url = models.URLField()
-    image_url = models.URLField()
+    url = models.URLField(max_length=300)
+    image_url = models.URLField(max_length=300)
     brand_name = models.CharField(max_length=100)
     rating = models.FloatField()
-    rating_url = models.URLField()
+    rating_url = models.URLField(max_length=300)
     stock = models.CharField(max_length=20)
     reviews = models.IntegerField()
 

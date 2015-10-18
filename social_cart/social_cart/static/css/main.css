@@ -1,6 +1,9 @@
 body {
     background-color: #F5F5F5;
-    margin-top: 60px;
+}
+
+.container.main_body {
+    margin-top: 60px; 
 }
 
 .login, .home {
