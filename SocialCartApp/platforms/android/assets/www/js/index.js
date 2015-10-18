@@ -36,76 +36,31 @@ var app = {
         //app.receivedEvent('deviceready');
         //window.location="http://www.socialcart.com/";
 
+        var push = PushNotification.init({ "android": {"senderID": "298895233032", "vibrate": "true", "forceShow": "true", "icon": "icon"} } );
 
-        
-        var pushNotification = window.plugins.pushNotification;
-        pushNotification.register(
-            successHandler, 
-            errorHandler, 
-            {
-                'senderID':'298895233032',
-                'ecb':'onNotificationGCM' // callback function
-            }
-        );
+        push.on('registration', function(data) {
+            // data.registrationId
+            //alert(data.registrationId);
+            deviceRegistered(data.registrationId);
+        });
 
-    },
+        push.on('notification', function(data) {
+            alert(data.title + " " + data.message);
+        });
 
+        push.on('error', function(e) {
+            // e.message
+        });
+         
 
-    // Update DOM on a Received Event
-    /*
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
-        console.log('Received Event: ' + id);
-    } */
-};
-
-function successHandler(result) {
-//    alert('Success');
-//    deviceRegistered(result);
-}
-
-function errorHandler(error) {
-    alert('Error');
-    console.log('Error: '+ error);
-}
-
-
-function onNotificationGCM(e) {
-    console.log('Notification Receoved');
-    switch(e.event) {
-        case 'registered':
-            if (e.regid.length > 0){
-                alert(e.regid);
-                deviceRegistered(e.regid); 
-                }
-        break;
-
-        case 'message':
-            /*
-            if (e.foreground){
-                // When the app is running foreground. 
-                alert('A Social Cart has popped up! Time to add some stuff!')
-            } */
-        break;
-
-        case 'error':
-            console.log('Error: ' + e.msg);
-        break;
-
-        default:
-          console.log('An unknown event was received');
-          break;
     }
-}    
+}
+
+
 
 function deviceRegistered(gcm_key) {
-    alert("Redirection");
+    //alert("Redirection");
+    //alert(gcm_key);
     var options = {
         location: 'no',
         clearcache: 'yes',
@@ -116,21 +71,4 @@ function deviceRegistered(gcm_key) {
     var ref = cordova.InAppBrowser.open(url, "_blank", "location=no");
 }
 
-/*
-function deviceRegistered(gcm_key) {
-    console.log("Device Registered");
-    alert('Yowza');
-    $.ajax({
-        url: 'http://www.socialcart.com/gcm_key/',
-        method: 'POST',
-        data: {gcm_key: gcm_key},
-        success: function(data){
-            console.log(data);
-        },
-        crossDomain: true,
-        cache: false,
-        dataType: "json",
-    });
-}
-*/
 app.initialize();

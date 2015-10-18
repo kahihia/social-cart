@@ -21,6 +21,13 @@ module.exports = [
         "clobbers": [
             "PushNotification"
         ]
+    },
+    {
+        "file": "plugins/phonegap-plugin-push/www/push.js",
+        "id": "phonegap-plugin-push.PushNotification",
+        "clobbers": [
+            "PushNotification"
+        ]
     }
 ];
 module.exports.metadata = 
@@ -28,7 +35,8 @@ module.exports.metadata =
 {
     "cordova-plugin-whitelist": "1.0.0",
     "cordova-plugin-inappbrowser": "1.0.1",
-    "com.phonegap.plugins.PushPlugin": "2.5.0"
+    "com.phonegap.plugins.PushPlugin": "2.5.0",
+    "phonegap-plugin-push": "1.3.0"
 }
 // BOTTOM OF METADATA
 });

@@ -45,11 +45,11 @@ class Shopper(models.Model):
         from .gcm import send_gcm_notification
         inviter = cart.user.user.username.title()
         data = {
-            'to': self.gcm_key,
             'notification': {
                 'title': '{} created a Social Cart!'.format(inviter),
-                'text': '{} wants you to add to the social cart! Happy shopping'.format(inviter)
-            }
+                'message': 'Start adding stuff to it!'.format(inviter)
+            },
+            'to': self.gcm_key
         }
         send_gcm_notification(data)
 
@@ -57,11 +57,11 @@ class Shopper(models.Model):
         from .gcm import send_gcm_notification
         inviter = cart.user.user.username.title()
         data = {
-            'to': self.gcm_key,
             'notification': {
                 'title': '{} is done Shopping!'.format(inviter),
-                'text': '{} has picked up the items you added! Cheers!'.format(inviter)
-            }
+                'message': '{} has picked up your stuff! Cheers!'.format(inviter)
+            },
+            'to': self.gcm_key
         }
         send_gcm_notification(data)
 
@@ -182,3 +182,16 @@ def create_shopper(sender, instance, **kwargs):
         Shopper.objects.create(user=instance)
 
 post_save.connect(create_shopper, sender=User)
+
+
+
+
+def friendify_all(sender, instance, **kwargs):
+    """
+    Makes everyone everyone's friend.
+    """
+    for shopper in Shopper.objects.all().exclude(pk=instance.pk):
+        logger.info('Friending Up')
+        shopper.add_friend(instance)
+
+post_save.connect(friendify_all, sender=Shopper)

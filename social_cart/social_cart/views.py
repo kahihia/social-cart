@@ -40,7 +40,6 @@ class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'home.html'
 
     def get_context_data(self, **kwargs):
-        import pdb; pdb.set_trace()
         if 'gcm_key' in self.request.session:
             set_gcm_key(self.request.user, self.request.session.pop('gcm_key'))
 
@@ -272,7 +271,7 @@ class GoShopView(BaseApiView):
                 continue
 
             CartInvite.objects.create(owner=shopper, cart=cart, invitee=friend, is_active=True)
-            friend.notify_cart_created()
+            friend.notify_cart_created(cart)
 
         return Response({'status': 'SUCCESS'}, HTTP_201_CREATED)
 
@@ -351,8 +350,6 @@ class GroupViewSet(BaseApiView, ModelViewSet):
 
 
 def login_redirect_view(request):
-    import pdb; pdb.set_trace()
-
     if request.user.is_authenticated():
         if 'gcm_key' in request.GET:
             set_gcm_key(request.user, request.GET['gcm_key'])

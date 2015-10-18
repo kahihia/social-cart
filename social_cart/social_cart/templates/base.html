@@ -22,6 +22,9 @@
             <span class="icon-bar"></span>
         </button>
         <a href="#" class="navbar-brand">Social Cart</a>
+        {% if request.user %}
+            <div class="navbar-brand pull-right" style="color: white">{{ request.user.username }}</div>
+        {% endif %}
     </div>
     <!-- Collection of nav links and other content for toggling -->
     <div id="navbarCollapse" class="collapse navbar-collapse">

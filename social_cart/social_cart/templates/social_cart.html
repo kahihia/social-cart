@@ -123,12 +123,14 @@ function getGroups() {
         url: '/groups/',
         success: function(data){
             console.log(data);
-            var groups = {"groups": data}
-            var source = $("#template-groups").html();
-            var template = Handlebars.compile(source);
-            var html = template(groups);
-            $('#invitee-groups').html(html);
-            $('.group.well').click(greenifyGroup);
+            if (data.length > 0) {
+                var groups = {"groups": data}
+                var source = $("#template-groups").html();
+                var template = Handlebars.compile(source);
+                var html = template(groups);
+                $('#invitee-groups').html(html);
+                $('.group.well').click(greenifyGroup);
+            }
         },
         dataType: "json",
         crossDomain: true,
@@ -143,12 +145,14 @@ function getFriends() {
         url: '/friends/',
         success: function(data){
             console.log(data);
-            var friends = {"friends": data}
-            var source = $("#template-friends").html();
-            var template = Handlebars.compile(source);
-            var html = template(friends);
-            $('#invitee-friends').html(html);
-            $('.friend.well').click(greenifyFriend);
+            if (data.length > 0) {
+                var friends = {"friends": data}
+                var source = $("#template-friends").html();
+                var template = Handlebars.compile(source);
+                var html = template(friends);
+                $('#invitee-friends').html(html);
+                $('.friend.well').click(greenifyFriend);
+            }
         },
         crossDomain: true,
         cache: false,

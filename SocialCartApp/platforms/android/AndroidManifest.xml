@@ -20,6 +20,15 @@
             </intent-filter>
         </receiver>
         <service android:name="com.plugin.gcm.GCMIntentService" />
+        <activity android:exported="true" android:name="com.adobe.phonegap.push.PushHandlerActivity" />
+        <receiver android:name="com.adobe.phonegap.push.CordovaGCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                <category android:name="io.cordova.hellocordova" />
+            </intent-filter>
+        </receiver>
+        <service android:name="com.adobe.phonegap.push.GCMIntentService" />
     </application>
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />

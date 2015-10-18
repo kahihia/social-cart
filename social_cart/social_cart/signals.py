@@ -72,13 +72,3 @@ def friendify(sender, instance, **kwargs):
         logging.exception('Unknown Provider')
 
 social_account_added.connect(friendify, sender=SocialLogin)
-
-
-def friendify_all(sender, instance, **kwargs):
-    """
-    Makes everyone everyone's friend.
-    """
-    for shopper in Shopper.objects.all():
-        shopper.add_friend(instance)
-
-post_save.connect(friendify_all, sender=Shopper)
